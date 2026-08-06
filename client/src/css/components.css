@@ -131,8 +131,8 @@
 
 /* Fix option rendering in select dropdowns (avoid white text on white background) */
 select.form-input option {
-  background-color: var(--color-bg-secondary) !important;
-  color: var(--color-text) !important;
+  background-color: #0c0f1d !important;
+  color: #ffffff !important;
 }
 
 /* Hide default browser numeric spinner arrows for premium dark appearance */

@@ -58,7 +58,7 @@ export function openStageSelector(onSelect) {
         Yarışmaya eklemek istediğiniz etap türünü seçin. Sıralamayı daha sonra değiştirebilirsiniz.
       </p>
       
-      <div class="selector-grid">
+      <div class="selector-grid" style="padding-bottom: 25px;">
         ${optionalStages.map(stage => `
           <div class="selector-card" data-stage-type="${stage.type}">
             <div class="selector-icon">${stage.icon}</div>

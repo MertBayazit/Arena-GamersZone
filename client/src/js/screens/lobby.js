@@ -248,7 +248,8 @@ export const lobbyScreen = {
     // Helper row drawer
     const createPlayerRow = (player) => {
       const row = document.createElement('div');
-      row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--color-border); border-radius: var(--radius-md);';
+      const isConnected = player.isConnected !== false;
+      row.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--color-border); border-radius: var(--radius-md); ${isConnected ? '' : 'opacity: 0.5;'}`;
       
       const isSelf = player.userId === currentUser._id;
       
@@ -256,7 +257,7 @@ export const lobbyScreen = {
         <div style="display: flex; align-items: center; gap: 10px;">
           ${getAvatarSVG(player.avatar?.value || 'avatar_01', 32)}
           <div>
-            <strong style="font-size: 0.85rem; color: #ffffff;">${player.username} ${isSelf ? '<span style="color: var(--color-accent-blue); font-size: 0.7rem;">(Sen)</span>' : ''}</strong>
+            <strong style="font-size: 0.85rem; color: ${isConnected ? '#ffffff' : 'var(--color-text-muted)'};">${player.username} ${isSelf ? '<span style="color: var(--color-accent-blue); font-size: 0.7rem;">(Sen)</span>' : ''} ${isConnected ? '' : '<span style="color: var(--color-error); font-size: 0.7rem;">(Koptu)</span>'}</strong>
           </div>
         </div>
         <div>

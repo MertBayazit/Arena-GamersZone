@@ -82,6 +82,24 @@ router.get('/history', protect, async (req, res) => {
   }
 });
 
+// ─── GET /api/games/history/:id ───────────────────────────────
+// Get single game history details by ID (Protected)
+router.get('/history/:id', protect, async (req, res) => {
+  try {
+    const history = await GameHistory.findById(req.params.id)
+      .populate('gameId', 'title');
+
+    if (!history) {
+      return res.status(404).json({ error: 'Oyun geçmişi bulunamadı' });
+    }
+
+    res.json(history);
+  } catch (error) {
+    console.error('Get Single History Error:', error);
+    res.status(500).json({ error: 'Oyun geçmişi detayı getirilirken hata oluştu' });
+  }
+});
+
 // ─── GET /api/games/:id ──────────────────────────────────────
 // Get single game details (Protected)
 router.get('/:id', protect, async (req, res) => {

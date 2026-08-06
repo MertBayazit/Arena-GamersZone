@@ -1,0 +1,118 @@
+﻿/**
+ * main.css — Arena GamersZone Global Stiller
+ *
+ * Faz 1: Temel reset + ping test ekranı stilleri.
+ * Faz 4'te tam tasarım sistemi buraya eklenecek.
+ */
+
+/* ─── Font Import (Google Fonts — index.html'de link var) ─── */
+/* Orbitron: Başlıklar | Inter: Gövde | Russo One: Sayılar */
+
+/* ─── CSS Reset ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Tasarım Değişkenleri (Faz 4'te genişletilecek) ─────── */
+:root {
+  --color-bg: #0a0e27;
+  --color-bg-secondary: #1a1145;
+  --color-accent-1: #00f0ff;
+  --color-accent-2: #b537f2;
+  --color-accent-3: #ff2d75;
+  --color-success: #00ff88;
+  --color-error: #ff3366;
+  --color-text: #ffffff;
+  --color-text-muted: #a0a0b8;
+
+  --font-heading: 'Orbitron', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-number: 'Russo One', sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  --transition: 0.2s ease;
+}
+
+/* ─── Base ───────────────────────────────────────────────── */
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Faz 1: Ping Test Ekranı ───────────────────────────── */
+.ping-screen {
+  text-align: center;
+  padding: 2rem;
+  max-width: 500px;
+}
+
+.ping-screen h1 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, var(--color-accent-1), var(--color-accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ping-screen .status {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+}
+
+.ping-screen .status.success {
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+.ping-screen .status.error {
+  background: rgba(255, 51, 102, 0.1);
+  border: 1px solid var(--color-error);
+  color: var(--color-error);
+}
+
+.ping-screen .detail {
+  color: var(--color-text-muted);
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.ping-screen .detail strong {
+  color: var(--color-text);
+}
+
+.ping-screen .note {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--color-accent-1);
+  opacity: 0.8;
+}
+
+.ping-screen code {
+  background: rgba(255,255,255,0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-family: monospace;
+  font-size: 0.85rem;
+}

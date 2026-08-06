@@ -2,22 +2,54 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const passport = require('passport');
+const connectDB = require('./config/db');
+const configurePassport = require('./config/passport');
+const authRoutes = require('./routes/auth');
+const gameRoutes = require('./routes/games');
+const uploadRoutes = require('./routes/upload');
+const http = require('http');
+const { Server } = require('socket.io');
+const { registerSocketEvents } = require('./socket/lobbyHandler');
+
+// Connect to Database
+connectDB();
+
+// Configure Passport
+configurePassport();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
 
-// ¦¦¦ Middleware ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+// Register Socket.io events
+registerSocketEvents(io);
+
+// â”€â”€â”€ Middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
 
-// ¦¦¦ Static — Uploaded files (images, audio) ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+// â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+app.use('/api/auth', authRoutes);
+app.use('/api/games', gameRoutes);
+app.use('/api/upload', uploadRoutes);
+
+//  Static  Uploaded files (images, audio) 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ¦¦¦ Health / Ping ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+//  Health / Ping 
 app.get('/api/ping', (req, res) => {
   res.json({
     status: 'ok',
@@ -27,12 +59,12 @@ app.get('/api/ping', (req, res) => {
   });
 });
 
-// ¦¦¦ 404 Fallback ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+// ï¿½ï¿½ï¿½ 404 Fallback ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// ¦¦¦ Global Error Handler ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
+// ï¿½ï¿½ï¿½ Global Error Handler ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 app.use((err, req, res, next) => {
   console.error('[Error]', err.stack);
   res.status(err.status || 500).json({
@@ -40,10 +72,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ¦¦¦ Start ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
-app.listen(PORT, () => {
-  console.log(`?? Arena GamersZone Server running on http://localhost:${PORT}`);
-  console.log(`?? Environment: ${process.env.NODE_ENV || 'development'}`);
+// â”€â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+server.listen(PORT, () => {
+  console.log(`ðŸš€ Arena GamersZone Server running on http://localhost:${PORT}`);
+  console.log(`ðŸš€ Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 module.exports = app;

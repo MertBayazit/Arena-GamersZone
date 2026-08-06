@@ -1,40 +1,33 @@
-﻿/**
- * main.js — Arena GamersZone SPA Giriş Noktası
- *
- * Faz 1: Temel altyapı.
- * Şu an sadece ping testi ve console log'u gösterir.
- * Faz 4'te SPA router buraya entegre edilecek.
- */
-
 import './css/main.css';
-import { pingServer } from './js/api.js';
+import './css/components.css';
+import './css/auth.css';
+import './css/dashboard.css';
+import './css/editor.css';
+import './css/game.css';
 
-async function init() {
-  console.log('🎮 Arena GamersZone başlatılıyor...');
+import { router } from './js/app.js';
+import { loginScreen } from './js/screens/login.js';
+import { registerScreen } from './js/screens/register.js';
+import { dashboardScreen } from './js/screens/dashboard.js';
+import { profileScreen } from './js/screens/profile.js';
+import { publicLibraryScreen } from './js/screens/publicLibrary.js';
+import { resultsScreen } from './js/screens/results.js';
+import { editorScreen } from './js/editor/editor.js';
+import { lobbyScreen } from './js/screens/lobby.js';
+import { gameScreen } from './js/screens/game.js';
 
-  // Backend bağlantı testi
-  const result = await pingServer();
-  if (result) {
-    console.log('✅ Backend bağlantısı başarılı:', result.message);
-    document.getElementById('app').innerHTML = `
-      <div class="ping-screen">
-        <h1>🎮 Arena GamersZone</h1>
-        <p class="status success">✅ Backend bağlantısı başarılı</p>
-        <p class="detail">${result.message}</p>
-        <p class="detail">Ortam: <strong>${result.env}</strong></p>
-        <p class="detail">Zaman: ${new Date(result.timestamp).toLocaleString('tr-TR')}</p>
-        <p class="note">Faz 1 tamamlandı. Geliştirme devam ediyor...</p>
-      </div>
-    `;
-  } else {
-    document.getElementById('app').innerHTML = `
-      <div class="ping-screen">
-        <h1>🎮 Arena GamersZone</h1>
-        <p class="status error">❌ Backend bağlantısı kurulamadı</p>
-        <p class="note">Server'ın çalıştığından emin ol: <code>cd server && npm run dev</code></p>
-      </div>
-    `;
-  }
-}
+// Register routes
+router.addRoute('#login', loginScreen);
+router.addRoute('#register', registerScreen);
+router.addRoute('#dashboard', dashboardScreen);
+router.addRoute('#profile', profileScreen);
+router.addRoute('#public-library', publicLibraryScreen);
+router.addRoute('#results', resultsScreen);
+router.addRoute('#editor', editorScreen);
+router.addRoute('#lobby', lobbyScreen);
+router.addRoute('#game', gameScreen);
 
-init();
+// Initialize router when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  router.init();
+});

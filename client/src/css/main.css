@@ -1,118 +1,127 @@
-﻿/**
- * main.css — Arena GamersZone Global Stiller
- *
- * Faz 1: Temel reset + ping test ekranı stilleri.
- * Faz 4'te tam tasarım sistemi buraya eklenecek.
- */
+/* ─── Font Import (Via index.html) ─── */
 
-/* ─── Font Import (Google Fonts — index.html'de link var) ─── */
-/* Orbitron: Başlıklar | Inter: Gövde | Russo One: Sayılar */
+:root {
+  /* Premium Dark HSL Color Scheme */
+  --bg-primary-h: 231;
+  --bg-primary-s: 60%;
+  --bg-primary-l: 6%; /* #060919 */
+  
+  --bg-secondary-h: 250;
+  --bg-secondary-s: 60%;
+  --bg-secondary-l: 12%; /* #120e30 */
 
-/* ─── CSS Reset ─────────────────────────────────────────── */
+  --color-bg: hsl(var(--bg-primary-h), var(--bg-primary-s), var(--bg-primary-l));
+  --color-bg-secondary: hsl(var(--bg-secondary-h), var(--bg-secondary-s), var(--bg-secondary-l));
+  
+  /* Curated Neon Glow Accents */
+  --color-accent-blue: #00f0ff;
+  --color-accent-purple: #b537f2;
+  --color-accent-pink: #ff2d75;
+  --color-success: #00ff88;
+  --color-error: #ff3366;
+  --color-warning: #ffb700;
+  
+  /* Text and Grays */
+  --color-text: #ffffff;
+  --color-text-muted: #a4a9c6;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-glass-bg: rgba(18, 14, 48, 0.45);
+  --color-glass-border: rgba(255, 255, 255, 0.06);
+  --color-glass-glow: rgba(181, 55, 242, 0.15);
+
+  /* Fonts */
+  --font-heading: 'Orbitron', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-number: 'Russo One', sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1.25rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3.5rem;
+
+  /* Border Radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 30px;
+
+  /* Shadow Glows */
+  --shadow-neon-blue: 0 0 15px rgba(0, 240, 255, 0.3);
+  --shadow-neon-purple: 0 0 15px rgba(181, 55, 242, 0.3);
+  --shadow-neon-pink: 0 0 15px rgba(255, 45, 117, 0.3);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── CSS Reset ─── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ─── Tasarım Değişkenleri (Faz 4'te genişletilecek) ─────── */
-:root {
-  --color-bg: #0a0e27;
-  --color-bg-secondary: #1a1145;
-  --color-accent-1: #00f0ff;
-  --color-accent-2: #b537f2;
-  --color-accent-3: #ff2d75;
-  --color-success: #00ff88;
-  --color-error: #ff3366;
-  --color-text: #ffffff;
-  --color-text-muted: #a0a0b8;
-
-  --font-heading: 'Orbitron', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-number: 'Russo One', sans-serif;
-
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-
-  --transition: 0.2s ease;
-}
-
-/* ─── Base ───────────────────────────────────────────────── */
 html, body {
   height: 100%;
   font-family: var(--font-body);
   background-color: var(--color-bg);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(181, 55, 242, 0.08) 0%, transparent 45%);
+  background-attachment: fixed;
   color: var(--color-text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 #app {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar Style */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-purple);
+}
+
+/* Utility Layouts */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.flex-center {
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* ─── Faz 1: Ping Test Ekranı ───────────────────────────── */
-.ping-screen {
-  text-align: center;
-  padding: 2rem;
-  max-width: 500px;
-}
-
-.ping-screen h1 {
-  font-family: var(--font-heading);
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, var(--color-accent-1), var(--color-accent-2));
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-purple));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}
-
-.ping-screen .status {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-md);
-}
-
-.ping-screen .status.success {
-  background: rgba(0, 255, 136, 0.1);
-  border: 1px solid var(--color-success);
-  color: var(--color-success);
-}
-
-.ping-screen .status.error {
-  background: rgba(255, 51, 102, 0.1);
-  border: 1px solid var(--color-error);
-  color: var(--color-error);
-}
-
-.ping-screen .detail {
-  color: var(--color-text-muted);
-  margin-bottom: 0.4rem;
-  font-size: 0.9rem;
-}
-
-.ping-screen .detail strong {
-  color: var(--color-text);
-}
-
-.ping-screen .note {
-  margin-top: 1.5rem;
-  font-size: 0.85rem;
-  color: var(--color-accent-1);
-  opacity: 0.8;
-}
-
-.ping-screen code {
-  background: rgba(255,255,255,0.1);
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-sm);
-  font-family: monospace;
-  font-size: 0.85rem;
 }

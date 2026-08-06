@@ -202,11 +202,11 @@ router.get(
       
       const clientURL = process.env.CLIENT_URL || 'http://localhost:5173';
       
-      // Redirect back to Vite client success landing page with token
-      res.redirect(`${clientURL}/auth-success.html?token=${token}`);
+      // Redirect back to Vite client success landing page using SPA hash routing
+      res.redirect(`${clientURL}/#auth-success?token=${token}`);
     } catch (error) {
       console.error('Google Callback Redirect Error:', error);
-      res.redirect((process.env.CLIENT_URL || 'http://localhost:5173') + '/login?error=auth_failed');
+      res.redirect((process.env.CLIENT_URL || 'http://localhost:5173') + '/#login?error=auth_failed');
     }
   }
 );

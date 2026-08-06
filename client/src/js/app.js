@@ -49,6 +49,19 @@ class Router {
       });
     }
 
+    // Intercept Google OAuth success redirect
+    if (hash === '#auth-success') {
+      const googleToken = queryParams.token;
+      if (googleToken) {
+        localStorage.setItem('token', googleToken);
+        await getMe(); // Refresh profile state with new token
+        this.navigate('#dashboard');
+      } else {
+        this.navigate('#login?error=auth_failed');
+      }
+      return;
+    }
+
     const token = localStorage.getItem('token');
     const isAuthRoute = hash === '#login' || hash === '#register';
 

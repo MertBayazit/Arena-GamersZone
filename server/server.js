@@ -59,12 +59,24 @@ app.get('/api/ping', (req, res) => {
   });
 });
 
-// ��� 404 Fallback ��������������������������������������������
+// Serve static client assets in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+  app.get('*', (req, res, next) => {
+    // If it's api route or uploads, bypass to let express handle 404
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
+
+// ─── 404 Fallback ────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// ��� Global Error Handler ������������������������������������
+//  Global Error Handler 
 app.use((err, req, res, next) => {
   console.error('[Error]', err.stack);
   res.status(err.status || 500).json({

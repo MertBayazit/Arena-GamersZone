@@ -1,7 +1,7 @@
 # ==========================================
 # Stage 1: Build the Frontend (Vite)
 # ==========================================
-FROM node:18-alpine AS client-builder
+FROM node:22-alpine AS client-builder
 WORKDIR /app/client
 
 # Install dependencies
@@ -15,7 +15,7 @@ RUN npm run build
 # ==========================================
 # Stage 2: Setup and Run the Backend (Express + Socket.io)
 # ==========================================
-FROM node:18-alpine
+FROM node:22-alpine
 WORKDIR /app/server
 
 # Install server dependencies

@@ -188,13 +188,36 @@ router.post('/:id/clone', protect, async (req, res) => {
       return res.status(400).json({ error: 'Yalnızca yayınlanmış oyunları kütüphanenize kopyalayabilirsiniz' });
     }
 
-    // Create copy
+    // Helper to recursively remove all _id fields from object structures
+    const stripIds = (obj) => {
+      if (Array.isArray(obj)) {
+        return obj.map(item => stripIds(item));
+      } else if (obj !== null && typeof obj === 'object') {
+        // If it's a Mongoose ObjectId, keep it as is (should not happen inside our settings/stages, but safe fallback)
+        if (obj.constructor && obj.constructor.name === 'ObjectId') {
+          return obj;
+        }
+        const clean = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (key === '_id' || key === 'id') continue;
+          clean[key] = stripIds(value);
+        }
+        return clean;
+      }
+      return obj;
+    };
+
+    const originalObj = originalGame.toObject();
+    const cleanSettings = stripIds(originalObj.settings);
+    const cleanStages = stripIds(originalObj.stages);
+
+    // Create copy with new IDs for all subdocuments
     const clonedGame = await Game.create({
       title: `${originalGame.title} (Kopyası)`,
       creatorId: req.user._id,
       status: 'draft', // Cloned game starts as draft
-      settings: originalGame.settings,
-      stages: originalGame.stages
+      settings: cleanSettings,
+      stages: cleanStages
     });
 
     res.status(201).json({

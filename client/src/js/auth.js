@@ -14,6 +14,28 @@ export async function getMe() {
     return null;
   }
 
+  // Check if it is a guest token
+  if (token.startsWith('guest_')) {
+    try {
+      const parts = token.split(':');
+      const guestId = parts[0];
+      const username = decodeURIComponent(parts[1] || 'Misafir');
+      currentUser = {
+        _id: guestId,
+        username: username,
+        avatar: {
+          type: 'preset',
+          value: 'avatar_01'
+        },
+        isGuest: true
+      };
+      return currentUser;
+    } catch (e) {
+      logout();
+      return null;
+    }
+  }
+
   try {
     const user = await apiCall('/auth/me');
     currentUser = user;
@@ -23,6 +45,23 @@ export async function getMe() {
     logout();
     return null;
   }
+}
+
+// Log in as guest
+export function loginAsGuest(username) {
+  const guestId = 'guest_' + Math.random().toString(36).substring(2, 9);
+  const token = `${guestId}:${encodeURIComponent(username)}`;
+  localStorage.setItem('token', token);
+  currentUser = {
+    _id: guestId,
+    username: username,
+    avatar: {
+      type: 'preset',
+      value: 'avatar_01'
+    },
+    isGuest: true
+  };
+  return currentUser;
 }
 
 // Log in

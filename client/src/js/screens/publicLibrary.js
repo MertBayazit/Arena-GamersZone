@@ -1,4 +1,5 @@
 import { apiCall } from '../api';
+import { currentUser } from '../auth';
 
 const stageNames = {
   multipleChoice: { name: 'Çoktan Seçmeli', icon: '🧠' },
@@ -136,12 +137,11 @@ export const publicLibraryScreen = {
               <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
                 ${stagesBadges || '<span style="font-size: 0.75rem; color: var(--color-text-muted);">Etap eklenmemiş</span>'}
               </div>
-            </div>
           </div>
 
           <div style="display: flex; gap: 8px; border-top: 1px solid var(--color-border); padding-top: 12px; margin-top: auto;">
             <button class="btn btn-secondary inspect-btn" style="flex: 1; padding: 0.5rem; font-size: 0.75rem;">DETAY</button>
-            <button class="btn btn-primary clone-btn" style="flex: 1; padding: 0.5rem; font-size: 0.75rem; box-shadow: var(--shadow-neon-purple); background: var(--color-accent-purple);">KOPYALA</button>
+            ${currentUser?.isGuest ? '' : '<button class="btn btn-primary clone-btn" style="flex: 1; padding: 0.5rem; font-size: 0.75rem; box-shadow: var(--shadow-neon-purple); background: var(--color-accent-purple);">KOPYALA</button>'}
           </div>
         `;
 
@@ -149,7 +149,9 @@ export const publicLibraryScreen = {
         card.querySelector('.inspect-btn').addEventListener('click', () => openInspectModal(game));
 
         // Clone button binding
-        card.querySelector('.clone-btn').addEventListener('click', () => cloneGame(game._id, game.title));
+        if (!currentUser?.isGuest) {
+          card.querySelector('.clone-btn').addEventListener('click', () => cloneGame(game._id, game.title));
+        }
 
         gamesGrid.appendChild(card);
       });
@@ -268,9 +270,11 @@ export const publicLibraryScreen = {
               </div>
             </div>
 
-            <button id="modal-clone-btn" class="btn btn-primary" style="width: 100%; margin-top: 5px;">
-              BU OYUNU KÜTÜPHANEME KOPYALA
-            </button>
+            ${currentUser?.isGuest ? '' : `
+              <button id="modal-clone-btn" class="btn btn-primary" style="width: 100%; margin-top: 5px;">
+                BU OYUNU KÜTÜPHANEME KOPYALA
+              </button>
+            `}
           </div>
         </div>
       `;
@@ -291,10 +295,12 @@ export const publicLibraryScreen = {
         if (e.target === modal) closeModal();
       });
 
-      modalCloneBtn.addEventListener('click', () => {
-        closeModal();
-        cloneGame(game._id, game.title);
-      });
+      if (modalCloneBtn) {
+        modalCloneBtn.addEventListener('click', () => {
+          closeModal();
+          cloneGame(game._id, game.title);
+        });
+      }
     }
 
   },

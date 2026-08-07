@@ -8,6 +8,9 @@ const { protect } = require('../middleware/auth');
 // Create a new game (Protected)
 router.post('/', protect, async (req, res) => {
   try {
+    if (req.user.isGuest) {
+      return res.status(403).json({ error: 'Misafir modunda oyun oluşturamazsınız.' });
+    }
     const { title, settings, stages } = req.body;
 
     if (!title) {
@@ -44,6 +47,9 @@ router.post('/', protect, async (req, res) => {
 // Get games created by current user (Protected)
 router.get('/mine', protect, async (req, res) => {
   try {
+    if (req.user.isGuest) {
+      return res.json([]);
+    }
     const games = await Game.find({ creatorId: req.user._id }).sort({ updatedAt: -1 });
     res.json(games);
   } catch (error) {
@@ -70,6 +76,9 @@ router.get('/public', protect, async (req, res) => {
 // Get game play history of current user (Protected)
 router.get('/history', protect, async (req, res) => {
   try {
+    if (req.user.isGuest) {
+      return res.json([]);
+    }
     const history = await GameHistory.find({
       'players.userId': req.user._id
     })
@@ -126,6 +135,9 @@ router.get('/:id', protect, async (req, res) => {
 // Update a game (Protected)
 router.put('/:id', protect, async (req, res) => {
   try {
+    if (req.user.isGuest) {
+      return res.status(403).json({ error: 'Misafir modunda oyun düzenleyemezsiniz.' });
+    }
     const game = await Game.findById(req.params.id);
 
     if (!game) {
@@ -155,6 +167,9 @@ router.put('/:id', protect, async (req, res) => {
 // Delete a game (Protected)
 router.delete('/:id', protect, async (req, res) => {
   try {
+    if (req.user.isGuest) {
+      return res.status(403).json({ error: 'Misafir modunda oyun silemezsiniz.' });
+    }
     const game = await Game.findById(req.params.id);
 
     if (!game) {
@@ -178,6 +193,9 @@ router.delete('/:id', protect, async (req, res) => {
 // Clone a public game (Protected)
 router.post('/:id/clone', protect, async (req, res) => {
   try {
+    if (req.user.isGuest) {
+      return res.status(403).json({ error: 'Misafir modunda oyun kopyalayamazsınız.' });
+    }
     const originalGame = await Game.findById(req.params.id);
 
     if (!originalGame) {

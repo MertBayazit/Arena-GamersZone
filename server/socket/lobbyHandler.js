@@ -764,11 +764,16 @@ function registerSocketEvents(io) {
         }
 
         // Map contestants format
-        const historyPlayers = lobby.players.map(p => ({
-          userId: p.userId,
-          username: p.username,
-          team: p.team
-        }));
+        const historyPlayers = lobby.players.map(p => {
+          const item = {
+            username: p.username,
+            team: p.team
+          };
+          if (p.userId && !p.userId.startsWith('guest_')) {
+            item.userId = p.userId;
+          }
+          return item;
+        });
 
         // Save GameHistory to DB (automatically gets purged in 7 days via TTL index)
         const history = await GameHistory.create({

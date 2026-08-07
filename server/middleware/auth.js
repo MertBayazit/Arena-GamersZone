@@ -12,6 +12,24 @@ const protect = async (req, res, next) => {
       // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
+      // Handle guest authentication
+      if (token && token.startsWith('guest_')) {
+        const parts = token.split(':');
+        const guestId = parts[0];
+        const username = decodeURIComponent(parts[1] || 'Misafir');
+        
+        req.user = {
+          _id: guestId,
+          username: username,
+          avatar: {
+            type: 'preset',
+            value: 'avatar_01'
+          },
+          isGuest: true
+        };
+        return next();
+      }
+
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

@@ -31,8 +31,16 @@ export const dashboardScreen = {
     }
 
     // 4. Render Layout
+    const isGuest = !!currentUser.isGuest;
     container.innerHTML = `
       <div class="container" style="padding-bottom: var(--spacing-lg);">
+        ${isGuest ? `
+          <div style="background: rgba(255, 179, 0, 0.1); border: 1px solid var(--color-warning); border-radius: var(--radius-md); padding: 10px 15px; margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--color-warning);">
+            <span>👤</span>
+            <strong>MİSAFİR MODU:</strong> Geçici hesap kullanıyorsunuz. Oyun oluşturma ve düzenleme özellikleri kısıtlanmıştır, hiçbir veri kaydedilmeyecektir.
+          </div>
+        ` : ''}
+        
         <!-- Dashboard Header -->
         <header class="dashboard-header">
           <div style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 900; letter-spacing: 2px;">
@@ -40,11 +48,11 @@ export const dashboardScreen = {
           </div>
           
           <div style="display: flex; align-items: center; gap: 15px;">
-            <div id="header-profile-btn" class="dashboard-user-card">
+            <div id="header-profile-btn" class="dashboard-user-card" style="${isGuest ? 'cursor: not-allowed; opacity: 0.8;' : ''}">
               ${getAvatarSVG(currentUser.avatar?.value || 'avatar_01', 36)}
               <div class="dashboard-user-info" style="display: none; sm:block;">
                 <h4>${currentUser.username}</h4>
-                <span>Profilim</span>
+                <span>${isGuest ? 'Geçici Misafir' : 'Profilim'}</span>
               </div>
             </div>
             <button id="logout-btn" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.75rem;">ÇIKIŞ</button>
@@ -76,7 +84,7 @@ export const dashboardScreen = {
           <div class="glass-card" style="display: flex; flex-direction: column;">
             <h2 style="font-family: var(--font-heading); font-size: 1.2rem; letter-spacing: 1px; margin-bottom: var(--spacing-sm);">İŞLEMLER</h2>
             <div class="quick-links-container">
-              <button class="quick-link-btn" onclick="window.location.hash='#editor'">
+              <button class="quick-link-btn" id="quick-create-btn" style="${isGuest ? 'cursor: not-allowed; opacity: 0.4;' : ''}">
                 <svg viewBox="0 0 24 24">
                   <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                 </svg>
@@ -100,9 +108,11 @@ export const dashboardScreen = {
                 <h2 style="font-family: var(--font-heading); font-size: 1.2rem; letter-spacing: 1px; margin: 0;">🎮 OYUNLARIM</h2>
                 <span style="font-size: 0.75rem; color: var(--color-text-muted); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: var(--radius-sm);">${myGames.length}</span>
               </div>
-              <button class="btn btn-secondary" onclick="window.location.hash='#public-library'" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; display: flex; align-items: center; gap: 4px; border-color: var(--color-accent-purple); color: #ffffff;">
-                📚 KÜTÜPHANEDEN ŞABLON AL
-              </button>
+              ${isGuest ? '' : `
+                <button class="btn btn-secondary" onclick="window.location.hash='#public-library'" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; display: flex; align-items: center; gap: 4px; border-color: var(--color-accent-purple); color: #ffffff;">
+                  📚 KÜTÜPHANEDEN ŞABLON AL
+                </button>
+              `}
             </div>
 
             <div id="games-container" class="games-grid ${myGames.length === 0 ? 'empty' : ''}">
@@ -112,15 +122,21 @@ export const dashboardScreen = {
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.3;">
                       <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                     </svg>
-                    <p>Henüz kendi oyununuzu tasarlamadınız.</p>
-                    <div style="display: flex; gap: var(--spacing-sm); margin-top: 10px;">
-                      <button class="btn btn-secondary" onclick="window.location.hash='#editor'" style="padding: 0.5rem 1.0rem; font-size: 0.8rem;">
-                        İLK OYUNUNU OLUŞTUR
+                    <p>${isGuest ? 'Misafir modunda kendi oyununuzu tasarlayamazsınız.' : 'Henüz kendi oyununuzu tasarlamadınız.'}</p>
+                    ${isGuest ? `
+                      <button class="btn btn-secondary" onclick="window.location.hash='#public-library'" style="padding: 0.5rem 1.0rem; font-size: 0.8rem; margin-top: 10px;">
+                        📚 GENEL KÜTÜPHANEYİ GEZ
                       </button>
-                      <button class="btn btn-primary" onclick="window.location.hash='#public-library'" style="padding: 0.5rem 1.0rem; font-size: 0.8rem; background: var(--color-accent-purple); box-shadow: var(--shadow-neon-purple);">
-                        ŞABLON KOPYALA 📚
-                      </button>
-                    </div>
+                    ` : `
+                      <div style="display: flex; gap: var(--spacing-sm); margin-top: 10px;">
+                        <button class="btn btn-secondary" onclick="window.location.hash='#editor'" style="padding: 0.5rem 1.0rem; font-size: 0.8rem;">
+                          İLK OYUNUNU OLUŞTUR
+                        </button>
+                        <button class="btn btn-primary" onclick="window.location.hash='#public-library'" style="padding: 0.5rem 1.0rem; font-size: 0.8rem; background: var(--color-accent-purple); box-shadow: var(--shadow-neon-purple);">
+                          ŞABLON KOPYALA 📚
+                        </button>
+                      </div>
+                    `}
                   </div>
                 `
                 : myGames.map(game => `
@@ -183,9 +199,22 @@ export const dashboardScreen = {
     const joinLobbyBtn = document.getElementById('join-lobby-btn');
     const lobbyCodeInput = document.getElementById('lobby-code-input');
     const lobbyError = document.getElementById('lobby-error');
+    const quickCreateBtn = document.getElementById('quick-create-btn');
 
     headerProfileBtn.addEventListener('click', () => {
-      window.location.hash = '#profile';
+      if (isGuest) {
+        alert('Misafir modunda profil ayarları yapılamaz. Lütfen tam hesap oluşturun!');
+      } else {
+        window.location.hash = '#profile';
+      }
+    });
+
+    quickCreateBtn.addEventListener('click', () => {
+      if (isGuest) {
+        alert('Misafir modunda oyun oluşturamazsınız. Lütfen kayıt olun veya giriş yapın!');
+      } else {
+        window.location.hash = '#editor';
+      }
     });
 
     logoutBtn.addEventListener('click', () => {

@@ -1,4 +1,4 @@
-import { getMe } from './auth';
+import { getMe, currentUser } from './auth';
 
 // Simple Hash-Based Router for Vanilla JS SPA
 class Router {
@@ -74,6 +74,13 @@ class Router {
 
     if (token && isAuthRoute) {
       // Redirect to dashboard if already authenticated
+      this.navigate('#dashboard');
+      return;
+    }
+
+    // Guest Guards: restrict #editor and #profile
+    if (token && token.startsWith('guest_') && (hash === '#editor' || hash === '#profile')) {
+      alert('Misafir modunda bu sayfaya erişemezsiniz!');
       this.navigate('#dashboard');
       return;
     }

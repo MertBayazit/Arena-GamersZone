@@ -521,7 +521,88 @@ function registerSocketEvents(io) {
         gameState: lobby.gameState
       });
     });
+    // ─────────────────────────────────────────────────────────────────────────
+    // ───── 5AO. HOST: SHOW CLASSIC QUESTION (Klasik) ─────
+    socket.on('host:show-classic-question', ({ lobbyCode }) => {
+      const lobby = lobbies.get(lobbyCode);
+      if (!lobby || lobby.status !== 'playing') return;
+      if (lobby.host.socketId !== socket.id) return;
+      lobby.gameState.classicQuestionShown = true;
+      io.to(`room:${lobbyCode}`).emit('game:classic-question-shown', {
+        currentQuestionIndex: lobby.gameState.currentQuestionIndex
+      });
+    });
 
+    // ───── 5AP. HOST: CLASSIC CORRECT ─────
+    socket.on('host:classic-correct', ({ lobbyCode }) => {
+      const lobby = lobbies.get(lobbyCode);
+      if (!lobby || lobby.status !== 'playing' || lobby.gameState.isGameOver) return;
+      if (lobby.host.socketId !== socket.id) return;
+
+      const stageOrder = lobby.settings?.stageOrder || [];
+      const stageKey = stageOrder[lobby.gameState.activeStageIndex];
+      const currentStage = lobby.stages?.[stageKey];
+      const questions = currentStage?.questions || [];
+      const qIdx = lobby.gameState.currentQuestionIndex;
+      const answer = questions[qIdx]?.answer || '';
+      const damage = currentStage?.damagePerQuestion || 10;
+
+      const buzzed = lobby.gameState.buzzedPlayer;
+      const answeringTeam = buzzed ? buzzed.team : null;
+      const targetTeam = answeringTeam === 'A' ? 'B' : (answeringTeam === 'B' ? 'A' : null);
+
+      if (targetTeam === 'A') lobby.gameState.teamA_HP = Math.max(0, lobby.gameState.teamA_HP - damage);
+      else if (targetTeam === 'B') lobby.gameState.teamB_HP = Math.max(0, lobby.gameState.teamB_HP - damage);
+
+      if (lobby.gameState.teamA_HP === 0 || lobby.gameState.teamB_HP === 0) {
+        lobby.gameState.isGameOver = true;
+        lobby.gameState.winnerTeam = lobby.gameState.teamA_HP === 0 ? 'B' : 'A';
+      }
+
+      lobby.gameState.classicAnswerRevealed = true;
+      lobby.gameState.classicRevealedAnswer = answer;
+
+      io.to(`room:${lobbyCode}`).emit('game:classic-correct', {
+        answer, answeringTeam, damage, gameState: lobby.gameState
+      });
+    });
+
+    // ───── 5AQ. HOST: CLASSIC WRONG ─────
+    socket.on('host:classic-wrong', ({ lobbyCode }) => {
+      const lobby = lobbies.get(lobbyCode);
+      if (!lobby || lobby.status !== 'playing') return;
+      if (lobby.host.socketId !== socket.id) return;
+
+      const buzzed = lobby.gameState.buzzedPlayer;
+      if (buzzed && !lobby.gameState.failedTeams.includes(buzzed.team)) {
+        lobby.gameState.failedTeams.push(buzzed.team);
+      }
+      lobby.gameState.buzzedPlayer = null;
+      lobby.gameState.isBuzzerActive = true;
+
+      io.to(`room:${lobbyCode}`).emit('game:classic-wrong', { gameState: lobby.gameState });
+    });
+
+    // ───── 5AR. HOST: NEXT CLASSIC QUESTION ─────
+    socket.on('host:next-classic-question', ({ lobbyCode }) => {
+      const lobby = lobbies.get(lobbyCode);
+      if (!lobby || lobby.status !== 'playing') return;
+      if (lobby.host.socketId !== socket.id) return;
+
+      lobby.gameState.currentQuestionIndex++;
+      lobby.gameState.buzzedPlayer = null;
+      lobby.gameState.failedTeams = [];
+      lobby.gameState.isBuzzerActive = false;
+      lobby.gameState.classicQuestionShown = false;
+      lobby.gameState.classicAnswerRevealed = false;
+      lobby.gameState.classicRevealedAnswer = null;
+
+      io.to(`room:${lobbyCode}`).emit('game:question-changed', {
+        currentQuestionIndex: lobby.gameState.currentQuestionIndex,
+        gameState: lobby.gameState
+      });
+    });
+    // ─────────────────────────────────────────────────────────────────────────
 
     // ───── 5B. HOST: CONTROL BUZZER ─────
     socket.on('host:set-buzzer-active', ({ lobbyCode, active }) => {
@@ -653,6 +734,9 @@ function registerSocketEvents(io) {
       lobby.gameState.buzzedPlayer = null;
       lobby.gameState.failedTeams = [];
       lobby.gameState.isBuzzerActive = false;
+      lobby.gameState.classicQuestionShown = false;
+      lobby.gameState.classicAnswerRevealed = false;
+      lobby.gameState.classicRevealedAnswer = null;
 
       // If activeIndex exceeds stageOrder length, trigger game finish
       if (lobby.gameState.activeStageIndex >= lobby.settings.stageOrder.length) {

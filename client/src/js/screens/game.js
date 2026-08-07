@@ -9,7 +9,8 @@ const stageNames = {
   sayismaca: { name: 'Sayışmaca', icon: '🎯' },
   wordPuzzle: { name: 'Kelime Bulmaca', icon: '🧩' },
   mapGuess: { name: 'Harita Tahmin', icon: '🗺️' },
-  finalDuel: { name: 'Final Düellosu', icon: '🏆' }
+  finalDuel: { name: 'Final Düellosu', icon: '🏆' },
+  classicQA: { name: 'Klasik', icon: '📝' }
 };
 
 export const gameScreen = {
@@ -416,6 +417,28 @@ export const gameScreen = {
                   : ''
                 }
               ` : ''}
+              ${stageKey === 'classicQA' ? (() => {
+                const questions = currentStage?.questions || [];
+                const qIdx = state.currentQuestionIndex;
+                const isShown = state.classicQuestionShown;
+                const isRevealed = state.classicAnswerRevealed;
+                const hasMore = qIdx < questions.length - 1;
+                const hasBuzzedQ = !!state.buzzedPlayer;
+                return `
+                  <button id="btn-show-classic-q" class="btn btn-secondary" style="width:100%; padding:0.8rem; margin-bottom:8px; border-color: var(--color-accent-blue); color:#ffffff;" ${isShown ? 'disabled' : ''}>
+                    ${isShown ? '✅ SORU GÖSTERİLDİ' : '👁️ SORUYU GÖSTER'}
+                  </button>
+                  <div style="display:flex; gap:6px; margin-bottom:8px;">
+                    <button id="btn-classic-correct" class="btn" style="flex:1; padding:0.8rem; background:rgba(0,255,136,0.12); border:1px solid var(--color-success); color:var(--color-success); font-weight:bold;" ${isRevealed ? 'disabled' : ''}>
+                      ✅ DOĞRU
+                    </button>
+                    <button id="btn-classic-wrong" class="btn" style="flex:1; padding:0.8rem; background:rgba(255,51,102,0.12); border:1px solid var(--color-error); color:var(--color-error); font-weight:bold;" ${isRevealed ? 'disabled' : ''}>
+                      ❌ YANLIŞ
+                    </button>
+                  </div>
+                  ${isRevealed && hasMore ? `<button id="btn-next-classic-q" class="btn btn-secondary" style="width:100%; padding:0.8rem; margin-bottom:8px; border-color:var(--color-accent-blue); color:#ffffff;">SONRAKİ SORU ➡️</button>` : ''}
+                `;
+              })() : ''}
               <button id="btn-next-stage" class="btn btn-secondary" style="width: 100%; padding: 0.8rem; box-shadow: var(--shadow-neon-purple); border-color: var(--color-accent-purple); color: #ffffff;">
                 SONRAKİ ETAP 🏁
               </button>
@@ -761,6 +784,46 @@ export const gameScreen = {
         }
       }
 
+      // ── Classic QA Stage: Host Panel ──
+      if (stageKey === 'classicQA') {
+        const questions = currentStage?.questions || [];
+        const qIdx = state.currentQuestionIndex;
+        const isShown = state.classicQuestionShown;
+        const isRevealed = state.classicAnswerRevealed;
+
+        if (qIdx < questions.length) {
+          const q = questions[qIdx];
+          hostStageContentBox.innerHTML = `
+            <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:600; font-size:0.95rem; font-family:var(--font-heading); color:var(--color-text-muted);">SORU ${qIdx + 1} / ${questions.length}</span>
+              <span class="game-card-badge ${isShown ? 'published' : 'draft'}" style="font-size:0.65rem;">${isShown ? '👁️ SORU GÖSTERİLDİ' : '🔒 SORU GİZLİ'}</span>
+            </div>
+
+            <!-- Question Box -->
+            <div class="game-question-box" style="margin-bottom:var(--spacing-md); font-weight:600;">
+              ${q.question}
+            </div>
+
+            <!-- Answer (always visible to host) -->
+            <div style="background: rgba(0,255,136,0.05); border:1px solid rgba(0,255,136,0.2); border-radius:var(--radius-md); padding:14px; text-align:center;">
+              <div style="font-size:0.6rem; text-transform:uppercase; letter-spacing:2px; color:var(--color-text-muted); margin-bottom:6px;">DOĞRU CEVAP (Sadece Host Görür)</div>
+              <div style="font-size:1.5rem; font-weight:900; font-family:var(--font-heading); color:var(--color-success); letter-spacing:2px;">${q.answer}</div>
+            </div>
+            ${isRevealed ? `
+              <div style="margin-top:10px; background:rgba(0,255,136,0.08); border:1px solid var(--color-success); border-radius:var(--radius-md); padding:8px 12px; font-size:0.8rem; color:var(--color-success); text-align:center;">
+                ✅ Cevap yarışmacılara gösterildi. Hasar uygulandı.
+              </div>
+            ` : ''}
+          `;
+        } else {
+          hostStageContentBox.innerHTML = `
+            <div class="empty-state" style="border:1px dashed var(--color-border); padding:var(--spacing-md);">
+              🏁 Klasik etabındaki tüm sorular tamamlandı! Sonraki etaba geçebilirsiniz.
+            </div>
+          `;
+        }
+      }
+
       // Event handlers bind
       if (hasBuzzed) {
         document.getElementById('btn-correct').addEventListener('click', () => {
@@ -903,6 +966,26 @@ export const gameScreen = {
             socket.emit('host:next-map', { lobbyCode });
           });
         }
+      }
+
+      // Classic QA bindings
+      if (stageKey === 'classicQA') {
+        const showQBtn = document.getElementById('btn-show-classic-q');
+        if (showQBtn) showQBtn.addEventListener('click', () => {
+          socket.emit('host:show-classic-question', { lobbyCode });
+        });
+        const correctBtn = document.getElementById('btn-classic-correct');
+        if (correctBtn) correctBtn.addEventListener('click', () => {
+          socket.emit('host:classic-correct', { lobbyCode });
+        });
+        const wrongBtn = document.getElementById('btn-classic-wrong');
+        if (wrongBtn) wrongBtn.addEventListener('click', () => {
+          socket.emit('host:classic-wrong', { lobbyCode });
+        });
+        const nextClassicBtn = document.getElementById('btn-next-classic-q');
+        if (nextClassicBtn) nextClassicBtn.addEventListener('click', () => {
+          socket.emit('host:next-classic-question', { lobbyCode });
+        });
       }
 
       // Next Stage bind
@@ -1054,6 +1137,109 @@ export const gameScreen = {
               <p style="color: var(--color-text-muted); font-size: 0.8rem; margin-top: 5px;">
                 Sunucunun bir sonraki etaba geçmesi bekleniyor...
               </p>
+            </div>
+          `;
+          return;
+        }
+      }
+
+      // ── Classic QA Stage: Contestant Screen ──
+      if (stageKey === 'classicQA') {
+        const questions = currentStage?.questions || [];
+        const qIdx = state.currentQuestionIndex;
+        const isShown = state.classicQuestionShown;
+        const isRevealed = state.classicAnswerRevealed;
+        const revealedAnswer = state.classicRevealedAnswer || '';
+
+        if (qIdx < questions.length) {
+          const q = questions[qIdx];
+          const isBuzzerActive = state.isBuzzerActive;
+          const buzzedPlayer = state.buzzedPlayer;
+          const selfPlayer = getSelfPlayer();
+          const hasFailed = selfPlayer && (state.failedTeams || []).includes(selfPlayer.team);
+          const isBuzzedByMe = buzzedPlayer && buzzedPlayer.userId === currentUser._id;
+          const isBuzzedBySomeone = !!buzzedPlayer;
+          const isBuzzedByOther = isBuzzedBySomeone && !isBuzzedByMe;
+
+          let buzzerText = 'BUZZER';
+          let buzzerClass = 'buzzer-btn';
+          if (isBuzzerActive && !isBuzzedBySomeone && !hasFailed) {
+            buzzerClass = 'buzzer-btn active';
+            buzzerText = '⚡ BUZZER';
+          } else if (isBuzzedByMe) {
+            buzzerClass = 'buzzer-btn mine';
+            buzzerText = '🎤 SEN!';
+          } else if (isBuzzedBySomeone) {
+            const bTeamColor = buzzedPlayer.team === 'A' ? '#00b4ff' : '#ff3366';
+            buzzerText = `🎤 ${buzzedPlayer.username}`;
+          } else if (hasFailed) {
+            buzzerClass = 'buzzer-btn failed';
+            buzzerText = '✗ PAS';
+          }
+
+          arenaRow.innerHTML = `
+            <div class="glass-card" style="border:1px solid var(--color-border); padding:var(--spacing-md); display:flex; flex-direction:column; gap:var(--spacing-md);">
+              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--color-border); padding-bottom:8px;">
+                <span style="font-family:var(--font-heading); font-size:0.8rem; color:var(--color-text-muted);">KLASİK - SORU ${qIdx + 1} / ${questions.length}</span>
+                <span class="game-card-badge ${isShown ? 'published' : 'draft'}" style="font-size:0.6rem;">${isShown ? '👁️ SORU AÇIK' : '🔒 SORU GİZLİ'}</span>
+              </div>
+
+              <!-- Question (hidden until host reveals) -->
+              ${isShown ? `
+                <h2 style="font-family:var(--font-heading); font-size:1.25rem; text-align:center; color:#ffffff; padding:var(--spacing-sm) 0;">
+                  ${q.question}
+                </h2>
+              ` : `
+                <div style="text-align:center; padding:var(--spacing-lg) 0; color:var(--color-text-muted);">
+                  <div style="font-size:2rem; margin-bottom:8px;">🔒</div>
+                  <div style="font-size:0.85rem;">Host soruyu okuyuyor...</div>
+                  <div style="font-size:0.7rem; margin-top:5px; color:rgba(255,255,255,0.3);">Soru açıldığında görünecek</div>
+                </div>
+              `}
+
+              <!-- Answer revealed after host marks correct -->
+              ${isRevealed ? `
+                <div style="background:rgba(0,255,136,0.08); border:2px solid var(--color-success); border-radius:var(--radius-md); padding:16px; text-align:center; animation: fadeInUp 0.4s ease;">
+                  <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--color-success); margin-bottom:6px;">✅ DOĞRU CEVAP</div>
+                  <div style="font-size:1.6rem; font-weight:900; font-family:var(--font-heading); color:var(--color-success);">${revealedAnswer}</div>
+                </div>
+              ` : ''}
+
+              <!-- Buzzer / Status -->
+              <div style="display:flex; flex-direction:column; align-items:center; border-top:1px solid var(--color-border); padding-top:var(--spacing-sm); gap:10px;">
+                ${isBuzzedByMe ? `
+                  <div style="color:var(--color-accent-blue); font-weight:bold; font-size:0.9rem; animation:blink 1.2s infinite;">🎤 SEN BUZZER'A BASTIN! Sesli cevabını ver.</div>
+                ` : isBuzzedBySomeone ? `
+                  <div style="color:var(--color-text-muted); font-size:0.85rem;">🎤 <strong style="color:#fff;">${buzzedPlayer.username}</strong> cevap veriyor...</div>
+                ` : ''}
+                ${!isRevealed ? `
+                  <button id="contestant-buzzer-btn" class="${buzzerClass}" style="width:80px; height:80px; font-size:0.65rem; border-width:4px;">${buzzerText}</button>
+                  <div style="font-size:0.75rem; color:var(--color-text-muted); text-align:center;">
+                    ${hasFailed ? 'Takımın bu soruda pas geçti.' : isBuzzerActive ? 'Buzzer aktif — hızlı bas!' : 'Buzzer kapalı'}
+                  </div>
+                ` : `
+                  <div style="font-size:0.8rem; color:var(--color-text-muted);">Sonraki soru için host bekleniyor...</div>
+                `}
+              </div>
+            </div>
+          `;
+
+          // Bind buzzer button
+          const buzzerBtn = document.getElementById('contestant-buzzer-btn');
+          if (buzzerBtn) {
+            buzzerBtn.addEventListener('click', () => {
+              if (isBuzzerActive && !buzzedPlayer && !hasFailed) {
+                socket.emit('game:buzz', { lobbyCode });
+              }
+            });
+          }
+          return;
+        } else {
+          arenaRow.innerHTML = `
+            <div class="glass-card" style="text-align:center; padding:var(--spacing-xl);">
+              <div style="font-size:3rem; margin-bottom:10px;">🏁</div>
+              <h3 style="font-family:var(--font-heading); font-size:1.1rem; color:#ffffff;">KLASİK ETAP TAMAMLANDI</h3>
+              <p style="color:var(--color-text-muted); font-size:0.8rem; margin-top:5px;">Sunucunun bir sonraki etaba geçmesi bekleniyor...</p>
             </div>
           `;
           return;
@@ -1548,6 +1734,26 @@ export const gameScreen = {
       drawArena();
     });
 
+    socket.on('game:classic-question-shown', (data) => {
+      if (!lobby) return;
+      lobby.gameState.classicQuestionShown = true;
+      lobby.gameState.currentQuestionIndex = data.currentQuestionIndex;
+      drawArena();
+    });
+
+    socket.on('game:classic-correct', (data) => {
+      if (!lobby) return;
+      lobby.gameState = data.gameState;
+      updateHPBars();
+      drawArena();
+    });
+
+    socket.on('game:classic-wrong', (data) => {
+      if (!lobby) return;
+      lobby.gameState = data.gameState;
+      drawArena();
+    });
+
     socket.on('game:question-changed', (data) => {
       if (!lobby) return;
       lobby.gameState.currentQuestionIndex = data.currentQuestionIndex;
@@ -1635,6 +1841,9 @@ export const gameScreen = {
     socket.off('game:paused');
     socket.off('game:resumed');
     socket.off('lobby:destroyed');
+    socket.off('game:classic-question-shown');
+    socket.off('game:classic-correct');
+    socket.off('game:classic-wrong');
     socket.off('error');
     
     // Disconnect

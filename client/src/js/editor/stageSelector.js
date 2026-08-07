@@ -40,6 +40,12 @@ const optionalStages = [
     name: 'Final Düellosu',
     icon: '🏆',
     desc: 'Takımlardan seçilen birer oyuncu teke tekte dönüşümlü olarak yarışır.'
+  },
+  {
+    type: 'classicQA',
+    name: 'Klasik',
+    icon: '📝',
+    desc: 'Tek cevaplı açık uçlu sorular sorulur. Yarışmacı sesli cevap verir, host doğru/yanlış kararını verir.'
   }
 ];
 

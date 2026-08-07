@@ -7,6 +7,7 @@ import { renderSayismacaForm } from './forms/sayismacaForm';
 import { renderWordPuzzleForm } from './forms/wordPuzzleForm';
 import { renderMapGuessForm } from './forms/mapGuessForm';
 import { renderFinalDuelForm } from './forms/finalDuelForm';
+import { renderClassicQAForm } from './forms/classicQAForm';
 
 // Default blank game template
 const createDefaultGame = () => ({
@@ -36,7 +37,8 @@ const stageNames = {
   sayismaca: { name: 'Sayışmaca', icon: '🎯' },
   wordPuzzle: { name: 'Kelime Bulmaca', icon: '🧩' },
   mapGuess: { name: 'Harita Tahmin', icon: '🗺️' },
-  finalDuel: { name: 'Final Düellosu', icon: '🏆' }
+  finalDuel: { name: 'Final Düellosu', icon: '🏆' },
+  classicQA: { name: 'Klasik', icon: '📝' }
 };
 
 export const editorScreen = {
@@ -352,6 +354,8 @@ export const editorScreen = {
         renderMapGuessForm(formContainer, game.stages[stageKey], handleStageDataChange);
       } else if (stageKey === 'finalDuel') {
         renderFinalDuelForm(formContainer, game.stages[stageKey], handleStageDataChange);
+      } else if (stageKey === 'classicQA') {
+        renderClassicQAForm(formContainer, game.stages[stageKey], handleStageDataChange);
       }
     };
 

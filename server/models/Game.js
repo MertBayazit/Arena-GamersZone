@@ -99,6 +99,15 @@ const gameSchema = new mongoose.Schema({
         options: [{ type: String, required: true }],
         correctAnswer: { type: Number, required: true }
       }]
+    },
+    classicQA: {
+      enabled: { type: Boolean, default: false },
+      answerMode: { type: String, enum: ['buzzer', 'turnBased'], default: 'buzzer' },
+      damagePerQuestion: { type: Number, default: 10 },
+      questions: [{
+        question: { type: String, required: true },
+        answer: { type: String, required: true }
+      }]
     }
   },
   createdAt: {

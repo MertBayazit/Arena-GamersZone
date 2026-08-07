@@ -13,6 +13,7 @@ export const profileScreen = {
     }
 
     let selectedAvatar = currentUser.avatar?.value || 'avatar_01';
+    let selectedAvatarType = currentUser.avatar?.type || 'preset';
 
     container.innerHTML = `
       <div class="container" style="padding-top: var(--spacing-lg); padding-bottom: var(--spacing-lg);">
@@ -72,14 +73,26 @@ export const profileScreen = {
                   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 5px;">
                     ${getAvatarList().map(avatar => `
                       <div 
-                        class="avatar-option ${avatar.key === selectedAvatar ? 'selected' : ''}" 
+                        class="avatar-option ${selectedAvatarType === 'preset' && avatar.key === selectedAvatar ? 'selected' : ''}" 
                         data-avatar-key="${avatar.key}"
-                        style="border: 2px solid ${avatar.key === selectedAvatar ? 'var(--color-accent-blue)' : 'var(--color-border)'}; border-radius: var(--radius-md); padding: 8px; cursor: pointer; text-align: center; background: rgba(255,255,255,0.02); transition: all var(--transition-fast);"
+                        style="border: 2px solid ${selectedAvatarType === 'preset' && avatar.key === selectedAvatar ? 'var(--color-accent-blue)' : 'var(--color-border)'}; border-radius: var(--radius-md); padding: 8px; cursor: pointer; text-align: center; background: rgba(255,255,255,0.02); transition: all var(--transition-fast);"
                       >
                         ${getAvatarSVG(avatar.key, 48)}
                         <div style="font-size: 0.7rem; color: var(--color-text-muted); margin-top: 4px;">${avatar.name}</div>
                       </div>
                     `).join('')}
+                  </div>
+
+                  <!-- Custom File Upload Option -->
+                  <div style="margin-top: 15px; border-top: 1px dashed var(--color-border); padding-top: 15px;">
+                    <label class="form-label" style="font-size: 0.75rem; display: block; margin-bottom: 8px;">Veya Kendi Resminizi Yükleyin 🖼️</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                      <input type="file" id="avatar-file-input" accept="image/*" style="display: none;" />
+                      <button type="button" id="btn-trigger-avatar-upload" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.75rem;">Fotoğraf Seç</button>
+                      <span id="avatar-upload-filename" style="font-size: 0.75rem; color: var(--color-text-muted); font-style: italic;">
+                        ${selectedAvatarType === 'custom' ? 'Özel resim yüklendi' : 'Dosya seçilmedi'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -158,7 +171,66 @@ export const profileScreen = {
         
         // Update selected key and preview
         selectedAvatar = option.dataset.avatarKey;
+        selectedAvatarType = 'preset';
+        document.getElementById('avatar-upload-filename').innerText = 'Dosya seçilmedi';
         currentAvatarPreview.innerHTML = getAvatarSVG(selectedAvatar, 120);
+      });
+    });
+
+    // Custom File Upload Trigger & Handler
+    const fileInput = document.getElementById('avatar-file-input');
+    const triggerUploadBtn = document.getElementById('btn-trigger-avatar-upload');
+    const uploadFilename = document.getElementById('avatar-upload-filename');
+
+    triggerUploadBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      openCropModal(file, async (croppedBlob) => {
+        uploadFilename.innerText = "kırpılmış_resim.jpg";
+
+        // Upload the cropped blob as formData
+        const formData = new FormData();
+        formData.append('image', croppedBlob, 'avatar.jpg');
+
+        statusAlert.style.display = 'none';
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'DOSYA YÜKLENİYOR...';
+
+        try {
+          const res = await apiCall('/upload/image', 'POST', formData);
+          selectedAvatar = res.url;
+          selectedAvatarType = 'custom';
+
+          // Deselect all presets
+          avatarOptions.forEach(opt => {
+            opt.classList.remove('selected');
+            opt.style.borderColor = 'var(--color-border)';
+          });
+
+          // Update preview
+          currentAvatarPreview.innerHTML = getAvatarSVG(selectedAvatar, 120);
+
+          statusAlert.innerText = 'Fotoğraf kırpıldı ve yüklendi! Profilinizi kaydetmek için lütfen "AYARLARI KAYDET" butonuna basın.';
+          statusAlert.className = 'alert alert-success';
+          statusAlert.style.display = 'flex';
+        } catch (err) {
+          statusAlert.innerText = err.message || 'Görsel yüklenirken bir hata oluştu.';
+          statusAlert.className = 'alert alert-error';
+          statusAlert.style.display = 'flex';
+          uploadFilename.innerText = 'Dosya seçilmedi';
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.innerText = 'AYARLARI KAYDET';
+        }
+      }, () => {
+        // Cancelled
+        fileInput.value = '';
+        uploadFilename.innerText = 'Dosya seçilmedi';
       });
     });
 
@@ -187,7 +259,7 @@ export const profileScreen = {
         const body = {
           username,
           avatar: {
-            type: 'preset',
+            type: selectedAvatarType,
             value: selectedAvatar
           }
         };
@@ -243,3 +315,213 @@ export const profileScreen = {
 };
 
 export default profileScreen;
+
+// ─── Circular Image Cropper Modal (Vanilla JS) ───────────────────────
+function openCropModal(file, onSave, onCancel) {
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'modal-overlay';
+  
+  modalOverlay.innerHTML = `
+    <div class="glass-card modal-content" style="max-width: 380px; display: flex; flex-direction: column; align-items: center; gap: 15px; padding: 20px;">
+      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+        <h4 style="font-family: var(--font-heading); font-size: 0.95rem; margin: 0; letter-spacing: 0.5px; color: #ffffff;">FOTOĞRAFI AYARLA</h4>
+        <button id="btn-close-crop" class="stage-item-btn" style="font-size: 1.2rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <!-- Crop Viewport Wrapper -->
+      <div style="position: relative; width: 260px; height: 260px; background: #080a14; border-radius: var(--radius-md); overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border);">
+        <!-- Circular Crop Mask -->
+        <div id="crop-viewport" style="position: absolute; width: 200px; height: 200px; border-radius: 50%; border: 2px solid var(--color-accent-purple); box-shadow: 0 0 0 9999px rgba(8, 10, 20, 0.75); overflow: hidden; cursor: move; z-index: 10;">
+          <img id="crop-image" style="position: absolute; pointer-events: none; user-select: none; max-width: none; max-height: none;" />
+        </div>
+      </div>
+
+      <!-- Zoom Range Slider -->
+      <div style="width: 100%; display: flex; flex-direction: column; gap: 5px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase;">
+          <span>YAKINLAŞTIR</span>
+          <span id="zoom-value">100%</span>
+        </div>
+        <input type="range" id="crop-zoom-slider" min="0.2" max="4" step="0.01" value="1" style="width: 100%; cursor: pointer;" />
+      </div>
+
+      <p style="font-size: 0.7rem; color: var(--color-text-muted); text-align: center; margin: 0;">
+        Görseli sürükleyerek kaydırın, sürgüyle yakınlaştırın.
+      </p>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 10px; width: 100%;">
+        <button id="btn-crop-cancel" class="btn btn-secondary" style="flex: 1; padding: 0.6rem; font-size: 0.8rem;">İPTAL</button>
+        <button id="btn-crop-confirm" class="btn btn-primary" style="flex: 1; padding: 0.6rem; font-size: 0.8rem; background: var(--color-accent-purple); box-shadow: var(--shadow-neon-purple);">UYGULA</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modalOverlay);
+  setTimeout(() => modalOverlay.classList.add('active'), 10);
+
+  const img = modalOverlay.querySelector('#crop-image');
+  const viewport = modalOverlay.querySelector('#crop-viewport');
+  const zoomSlider = modalOverlay.querySelector('#crop-zoom-slider');
+  const zoomValueLabel = modalOverlay.querySelector('#zoom-value');
+  const confirmBtn = modalOverlay.querySelector('#btn-crop-confirm');
+  const cancelBtn = modalOverlay.querySelector('#btn-crop-cancel');
+  const closeBtn = modalOverlay.querySelector('#btn-close-crop');
+
+  let zoom = 1;
+  let imgLeft = 0;
+  let imgTop = 0;
+  let baseWidth = 0;
+  let baseHeight = 0;
+  
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+
+  // Load selected file
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+
+  img.onload = () => {
+    const naturalWidth = img.naturalWidth;
+    const naturalHeight = img.naturalHeight;
+
+    // Scale to cover 200x200 viewport fully
+    if (naturalWidth > naturalHeight) {
+      baseHeight = 200;
+      baseWidth = 200 * (naturalWidth / naturalHeight);
+    } else {
+      baseWidth = 200;
+      baseHeight = 200 * (naturalHeight / naturalWidth);
+    }
+
+    imgLeft = (200 - baseWidth) / 2;
+    imgTop = (200 - baseHeight) / 2;
+
+    updateImageStyle();
+  };
+
+  function updateImageStyle() {
+    img.style.width = `${baseWidth * zoom}px`;
+    img.style.height = `${baseHeight * zoom}px`;
+    img.style.left = `${imgLeft}px`;
+    img.style.top = `${imgTop}px`;
+    zoomValueLabel.innerText = `${Math.round(zoom * 100)}%`;
+  }
+
+  // Mouse & Touch dragging
+  const handleDragStart = (e) => {
+    isDragging = true;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startX = clientX - imgLeft;
+    startY = clientY - imgTop;
+  };
+
+  const handleDragMove = (e) => {
+    if (!isDragging) return;
+    if (e.cancelable) e.preventDefault();
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    imgLeft = clientX - startX;
+    imgTop = clientY - startY;
+
+    // Restrict positions dynamically (works for both zoom-in and zoom-out)
+    const currentWidth = baseWidth * zoom;
+    const currentHeight = baseHeight * zoom;
+    const minLeft = Math.min(0, 200 - currentWidth);
+    const maxLeft = Math.max(0, 200 - currentWidth);
+    const minTop = Math.min(0, 200 - currentHeight);
+    const maxTop = Math.max(0, 200 - currentHeight);
+
+    imgLeft = Math.min(maxLeft, Math.max(minLeft, imgLeft));
+    imgTop = Math.min(maxTop, Math.max(minTop, imgTop));
+
+    updateImageStyle();
+  };
+
+  const handleDragEnd = () => {
+    isDragging = false;
+  };
+
+  // Bind drag interactions
+  viewport.addEventListener('mousedown', handleDragStart);
+  window.addEventListener('mousemove', handleDragMove);
+  window.addEventListener('mouseup', handleDragEnd);
+
+  viewport.addEventListener('touchstart', handleDragStart, { passive: true });
+  window.addEventListener('touchmove', handleDragMove, { passive: false });
+  window.addEventListener('touchend', handleDragEnd);
+
+  // Zoom Slider interactions
+  zoomSlider.addEventListener('input', (e) => {
+    const oldZoom = zoom;
+    zoom = parseFloat(e.target.value);
+
+    // Zoom relative to viewport center
+    const zoomRatio = zoom / oldZoom;
+    imgLeft = 100 - (100 - imgLeft) * zoomRatio;
+    imgTop = 100 - (100 - imgTop) * zoomRatio;
+
+    // Apply constraints
+    const currentWidth = baseWidth * zoom;
+    const currentHeight = baseHeight * zoom;
+    const minLeft = Math.min(0, 200 - currentWidth);
+    const maxLeft = Math.max(0, 200 - currentWidth);
+    const minTop = Math.min(0, 200 - currentHeight);
+    const maxTop = Math.max(0, 200 - currentHeight);
+
+    imgLeft = Math.min(maxLeft, Math.max(minLeft, imgLeft));
+    imgTop = Math.min(maxTop, Math.max(minTop, imgTop));
+
+    updateImageStyle();
+  });
+
+  const closeModal = () => {
+    modalOverlay.classList.remove('active');
+    window.removeEventListener('mousemove', handleDragMove);
+    window.removeEventListener('mouseup', handleDragEnd);
+    window.removeEventListener('touchmove', handleDragMove);
+    window.removeEventListener('touchend', handleDragEnd);
+    setTimeout(() => modalOverlay.remove(), 300);
+  };
+
+  closeBtn.addEventListener('click', () => {
+    closeModal();
+    onCancel();
+  });
+  cancelBtn.addEventListener('click', () => {
+    closeModal();
+    onCancel();
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 200;
+    const ctx = canvas.getContext('2d');
+
+    // Fill background with theme color for zoomed-out states
+    ctx.fillStyle = '#080a14';
+    ctx.fillRect(0, 0, 200, 200);
+
+    // Draw the active crop viewport region
+    ctx.drawImage(
+      img,
+      imgLeft,
+      imgTop,
+      baseWidth * zoom,
+      baseHeight * zoom
+    );
+
+    canvas.toBlob((blob) => {
+      onSave(blob);
+      closeModal();
+    }, 'image/jpeg', 0.92);
+  });
+}

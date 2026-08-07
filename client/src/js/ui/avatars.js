@@ -73,6 +73,9 @@ const avatars = {
 };
 
 export function getAvatarSVG(value, size = 80) {
+  if (value && (value.startsWith('/uploads') || value.startsWith('http') || value.startsWith('data:'))) {
+    return `<img src="${value}" style="width: ${size}px; height: ${size}px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-accent-purple); box-shadow: 0 0 10px rgba(181, 55, 242, 0.3);" class="custom-avatar-img" />`;
+  }
   const avatar = avatars[value] || avatars.avatar_01;
   return avatar.svg(size);
 }

@@ -95,9 +95,14 @@ export const dashboardScreen = {
         <div style="display: grid; grid-template-columns: 1fr; gap: var(--spacing-lg); margin-top: var(--spacing-lg); lg:grid-template-columns: 2fr 1fr;">
           <!-- Left Bottom: Benim Oyunlarım -->
           <div>
-            <div class="games-section-header">
-              <h2 style="font-family: var(--font-heading); font-size: 1.2rem; letter-spacing: 1px;">🎮 OYUNLARIM</h2>
-              <span style="font-size: 0.8rem; color: var(--color-text-muted);">${myGames.length} Oyun Oluşturuldu</span>
+            <div class="games-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+              <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
+                <h2 style="font-family: var(--font-heading); font-size: 1.2rem; letter-spacing: 1px; margin: 0;">🎮 OYUNLARIM</h2>
+                <span style="font-size: 0.75rem; color: var(--color-text-muted); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: var(--radius-sm);">${myGames.length}</span>
+              </div>
+              <button class="btn btn-secondary" onclick="window.location.hash='#public-library'" style="padding: 0.4rem 0.8rem; font-size: 0.7rem; display: flex; align-items: center; gap: 4px; border-color: var(--color-accent-purple); color: #ffffff;">
+                📚 KÜTÜPHANEDEN ŞABLON AL
+              </button>
             </div>
 
             <div id="games-container" class="games-grid ${myGames.length === 0 ? 'empty' : ''}">
@@ -108,9 +113,14 @@ export const dashboardScreen = {
                       <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                     </svg>
                     <p>Henüz kendi oyununuzu tasarlamadınız.</p>
-                    <button class="btn btn-secondary" onclick="window.location.hash='#editor'" style="padding: 0.5rem 1rem; font-size: 0.8rem; margin-top: 5px;">
-                      İLK OYUNUNU OLUŞTUR
-                    </button>
+                    <div style="display: flex; gap: var(--spacing-sm); margin-top: 10px;">
+                      <button class="btn btn-secondary" onclick="window.location.hash='#editor'" style="padding: 0.5rem 1.0rem; font-size: 0.8rem;">
+                        İLK OYUNUNU OLUŞTUR
+                      </button>
+                      <button class="btn btn-primary" onclick="window.location.hash='#public-library'" style="padding: 0.5rem 1.0rem; font-size: 0.8rem; background: var(--color-accent-purple); box-shadow: var(--shadow-neon-purple);">
+                        ŞABLON KOPYALA 📚
+                      </button>
+                    </div>
                   </div>
                 `
                 : myGames.map(game => `
